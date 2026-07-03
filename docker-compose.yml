@@ -1,0 +1,44 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    environment:
+      CLICKHOUSE_PASSWORD: secret
+    ports:
+      - "8123:8123"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--password", "secret", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  consumer:
+    build: ./consumer
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PASSWORD: secret
+      BACKFILL_DAYS: 1
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: secret
+      GF_INSTALL_PLUGINS: grafana-clickhouse-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - clickhouse
+
+volumes:
+  clickhouse-data:
+  grafana-data:
