@@ -1,0 +1,29 @@
+image:
+  repository: ghcr.io/stubchief/wiki-edit-monitor-consumer
+  tag: latest
+  pullPolicy: Always
+
+clickhouse:
+  host: clickhouse-clickhouse.clickhouse.svc.cluster.local
+  port: 8123
+  user: default
+  database: default
+  # password is set via secret
+
+backfillDays: 7
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /livez
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  failureThreshold: 3

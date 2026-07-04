@@ -1,726 +1,553 @@
 {
-    "apiVersion": "dashboard.grafana.app/v2",
-    "kind": "Dashboard",
-    "metadata": {
-        "name": "advdd4s",
-        "namespace": "default",
-        "uid": "f88d09d4-ba47-46e7-acb7-10eca0ff1b67",
-        "resourceVersion": "1783010249725985",
-        "generation": 14,
-        "creationTimestamp": "2026-07-02T15:33:27Z",
-        "labels": {
-            "grafana.app/deprecatedInternalID": "1048015731175424"
-        },
-        "annotations": {
-            "grafana.app/createdBy": "user:cfqw3j9pgjdogd",
-            "grafana.app/managedBy": "classic-file-provisioning",
-            "grafana.app/managerId": "default",
-            "grafana.app/sourceChecksum": "81a589c65c1edf09ce2b59c26650cc41",
-            "grafana.app/sourcePath": "/var/lib/grafana/dashboards/anomalies.json",
-            "grafana.app/sourceTimestamp": "1783010229000",
-            "grafana.app/updatedBy": "access-policy:service",
-            "grafana.app/updatedTimestamp": "2026-07-02T16:37:29Z",
-            "grafana.app/folder": ""
-        }
-    },
-    "spec": {
-        "annotations": [
+    "annotations": {
+        "list": [
             {
-                "kind": "AnnotationQuery",
-                "spec": {
-                    "builtIn": true,
-                    "enable": true,
-                    "hide": true,
-                    "iconColor": "rgba(0, 211, 255, 1)",
-                    "name": "Annotations & Alerts",
-                    "query": {
-                        "datasource": {
-                            "name": "-- Grafana --"
-                        },
-                        "group": "grafana",
-                        "kind": "DataQuery",
-                        "spec": {},
-                        "version": "v0"
-                    }
-                }
-            }
-        ],
-        "cursorSync": "Off",
-        "editable": true,
-        "elements": {
-            "panel-1": {
-                "kind": "Panel",
-                "spec": {
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "hidden": false,
-                                        "query": {
-                                            "datasource": {
-                                                "name": "clickhouse"
-                                            },
-                                            "group": "grafana-clickhouse-datasource",
-                                            "kind": "DataQuery",
-                                            "spec": {
-                                                "editorType": "sql",
-                                                "format": 1,
-                                                "meta": {
-                                                    "builderOptions": {
-                                                        "columns": [],
-                                                        "database": "",
-                                                        "limit": 1000,
-                                                        "mode": "list",
-                                                        "queryType": "table",
-                                                        "table": ""
-                                                    }
-                                                },
-                                                "pluginVersion": "4.18.0",
-                                                "queryType": "table",
-                                                "rawSql": "WITH hourly AS (\r\n    SELECT\r\n        toStartOfHour(tick_start) AS hour,\r\n        wiki,\r\n        server_name,\r\n        namespace,\r\n        title,\r\n        sum(edit_count) AS edit_count\r\n    FROM agg_edits\r\n    GROUP BY hour, wiki, server_name, namespace, title\r\n),\r\nscored AS (\r\n    SELECT\r\n        hour,\r\n        wiki,\r\n        server_name,\r\n        namespace,\r\n        title,\r\n        edit_count,\r\n        avgIf(edit_count, hour < (SELECT max(hour) FROM hourly))\r\n            OVER (PARTITION BY wiki, title) AS baseline,\r\n        stddevPopIf(edit_count, hour < (SELECT max(hour) FROM hourly))\r\n            OVER (PARTITION BY wiki, title) AS stddev,\r\n        count() OVER (PARTITION BY wiki, title) AS observation_count\r\n    FROM hourly\r\n)\r\nSELECT\r\n    hour,\r\n    wiki,\r\n    server_name,\r\n    namespace,\r\n    title,\r\n    edit_count,\r\n    round(baseline, 2) AS baseline,\r\n    round(stddev, 2)   AS stddev,\r\n    round((edit_count - baseline) / stddev, 2) AS z_score\r\nFROM scored\r\nWHERE hour = (SELECT max(hour) FROM hourly)\r\n  AND observation_count >= 10\r\n  AND stddev > 0\r\n  AND z_score > 0\r\nORDER BY z_score DESC\r\nLIMIT 50"
-                                            },
-                                            "version": "v0"
-                                        },
-                                        "refId": "A"
-                                    }
-                                }
-                            ],
-                            "queryOptions": {},
-                            "transformations": []
-                        }
-                    },
-                    "description": "",
-                    "id": 1,
-                    "links": [],
-                    "title": "Top anomalies",
-                    "vizConfig": {
-                        "group": "table",
-                        "kind": "VizConfig",
-                        "spec": {
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "thresholds"
-                                    },
-                                    "custom": {
-                                        "align": "auto",
-                                        "cellOptions": {
-                                            "type": "auto"
-                                        },
-                                        "footer": {
-                                            "reducers": []
-                                        },
-                                        "inspect": false
-                                    },
-                                    "thresholds": {
-                                        "mode": "absolute",
-                                        "steps": [
-                                            {
-                                                "color": "green",
-                                                "value": 0
-                                            },
-                                            {
-                                                "color": "red",
-                                                "value": 80
-                                            }
-                                        ]
-                                    }
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "title",
-                                            "scope": "series"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "links",
-                                                "value": [
-                                                    {
-                                                        "targetBlank": false,
-                                                        "title": "Link",
-                                                        "url": "https://${__data.fields.server_name}/wiki/${__data.fields.title}"
-                                                    },
-                                                    {
-                                                        "title": "Show history",
-                                                        "url": "/d/advdd4s?var-title=${__data.fields.title}&var-wiki=${__data.fields.wiki}"
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "hour",
-                                            "scope": "series"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.hideFrom.viz",
-                                                "value": true
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "namespace",
-                                            "scope": "series"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.hideFrom.viz",
-                                                "value": true
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "server_name",
-                                            "scope": "series"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.hideFrom.viz",
-                                                "value": true
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "baseline",
-                                            "scope": "series"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.hideFrom.viz",
-                                                "value": true
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "stddev",
-                                            "scope": "series"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.hideFrom.viz",
-                                                "value": true
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            "options": {
-                                "cellHeight": "sm",
-                                "showHeader": true,
-                                "sortBy": [
-                                    {
-                                        "desc": true,
-                                        "displayName": "z_score"
-                                    }
-                                ]
-                            }
-                        },
-                        "version": "13.1.0"
-                    }
-                }
-            },
-            "panel-2": {
-                "kind": "Panel",
-                "spec": {
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "hidden": false,
-                                        "query": {
-                                            "datasource": {
-                                                "name": "clickhouse"
-                                            },
-                                            "group": "grafana-clickhouse-datasource",
-                                            "kind": "DataQuery",
-                                            "spec": {
-                                                "editorType": "sql",
-                                                "format": 1,
-                                                "meta": {
-                                                    "builderOptions": {
-                                                        "columns": [],
-                                                        "database": "",
-                                                        "limit": 1000,
-                                                        "mode": "list",
-                                                        "queryType": "table",
-                                                        "table": ""
-                                                    }
-                                                },
-                                                "pluginVersion": "4.18.0",
-                                                "queryType": "table",
-                                                "rawSql": "SELECT\r\n    tick_start,\r\n    sum(edit_count) AS edit_count\r\nFROM agg_edits\r\nWHERE title = '$title'\r\n  AND wiki = '$wiki'\r\nGROUP BY tick_start\r\nORDER BY tick_start WITH FILL STEP toIntervalMinute(2)"
-                                            },
-                                            "version": "v0"
-                                        },
-                                        "refId": "A"
-                                    }
-                                }
-                            ],
-                            "queryOptions": {},
-                            "transformations": []
-                        }
-                    },
-                    "description": "",
-                    "id": 2,
-                    "links": [],
-                    "title": "Edit history",
-                    "vizConfig": {
-                        "group": "timeseries",
-                        "kind": "VizConfig",
-                        "spec": {
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "palette-classic"
-                                    },
-                                    "custom": {
-                                        "axisBorderShow": false,
-                                        "axisCenteredZero": false,
-                                        "axisColorMode": "text",
-                                        "axisLabel": "",
-                                        "axisPlacement": "auto",
-                                        "barAlignment": 0,
-                                        "barWidthFactor": 0.6,
-                                        "drawStyle": "line",
-                                        "fillOpacity": 0,
-                                        "gradientMode": "none",
-                                        "hideFrom": {
-                                            "legend": false,
-                                            "tooltip": false,
-                                            "viz": false
-                                        },
-                                        "insertNulls": false,
-                                        "lineInterpolation": "linear",
-                                        "lineWidth": 1,
-                                        "pointSize": 5,
-                                        "scaleDistribution": {
-                                            "type": "linear"
-                                        },
-                                        "showPoints": "auto",
-                                        "showValues": false,
-                                        "spanNulls": false,
-                                        "stacking": {
-                                            "group": "A",
-                                            "mode": "none"
-                                        },
-                                        "thresholdsStyle": {
-                                            "mode": "off"
-                                        }
-                                    },
-                                    "thresholds": {
-                                        "mode": "absolute",
-                                        "steps": [
-                                            {
-                                                "color": "green",
-                                                "value": 0
-                                            },
-                                            {
-                                                "color": "red",
-                                                "value": 80
-                                            }
-                                        ]
-                                    }
-                                },
-                                "overrides": []
-                            },
-                            "options": {
-                                "annotations": {
-                                    "clustering": -1,
-                                    "multiLane": false
-                                },
-                                "legend": {
-                                    "calcs": [],
-                                    "displayMode": "list",
-                                    "enableFacetedFilter": false,
-                                    "overflow": "ellipsis",
-                                    "placement": "bottom",
-                                    "showLegend": true
-                                },
-                                "tooltip": {
-                                    "hideZeros": false,
-                                    "mode": "single",
-                                    "sort": "none"
-                                }
-                            }
-                        },
-                        "version": "13.1.0"
-                    }
-                }
-            },
-            "panel-3": {
-                "kind": "Panel",
-                "spec": {
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "hidden": false,
-                                        "query": {
-                                            "datasource": {
-                                                "name": "clickhouse"
-                                            },
-                                            "group": "grafana-clickhouse-datasource",
-                                            "kind": "DataQuery",
-                                            "spec": {
-                                                "editorType": "sql",
-                                                "format": 1,
-                                                "meta": {
-                                                    "builderOptions": {
-                                                        "columns": [],
-                                                        "database": "",
-                                                        "limit": 1000,
-                                                        "mode": "list",
-                                                        "queryType": "table",
-                                                        "table": ""
-                                                    }
-                                                },
-                                                "pluginVersion": "4.18.0",
-                                                "queryType": "table",
-                                                "rawSql": "SELECT sum(edit_count)\r\nFROM agg_edits\r\nWHERE tick_start = (SELECT max(tick_start) FROM agg_edits)"
-                                            },
-                                            "version": "v0"
-                                        },
-                                        "refId": "A"
-                                    }
-                                }
-                            ],
-                            "queryOptions": {},
-                            "transformations": []
-                        }
-                    },
-                    "description": "",
-                    "id": 3,
-                    "links": [],
-                    "title": "Edits / tick",
-                    "vizConfig": {
-                        "group": "stat",
-                        "kind": "VizConfig",
-                        "spec": {
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "thresholds"
-                                    },
-                                    "thresholds": {
-                                        "mode": "absolute",
-                                        "steps": [
-                                            {
-                                                "color": "green",
-                                                "value": 0
-                                            },
-                                            {
-                                                "color": "red",
-                                                "value": 80
-                                            }
-                                        ]
-                                    }
-                                },
-                                "overrides": []
-                            },
-                            "options": {
-                                "colorMode": "value",
-                                "graphMode": "area",
-                                "justifyMode": "auto",
-                                "orientation": "auto",
-                                "percentChangeColorMode": "standard",
-                                "reduceOptions": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ],
-                                    "fields": "",
-                                    "values": false
-                                },
-                                "showPercentChange": false,
-                                "textMode": "auto",
-                                "wideLayout": true
-                            }
-                        },
-                        "version": "13.1.0"
-                    }
-                }
-            },
-            "panel-4": {
-                "kind": "Panel",
-                "spec": {
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "hidden": false,
-                                        "query": {
-                                            "datasource": {
-                                                "name": "clickhouse"
-                                            },
-                                            "group": "grafana-clickhouse-datasource",
-                                            "kind": "DataQuery",
-                                            "spec": {
-                                                "editorType": "sql",
-                                                "format": 1,
-                                                "meta": {
-                                                    "builderOptions": {
-                                                        "columns": [],
-                                                        "database": "",
-                                                        "limit": 1000,
-                                                        "mode": "list",
-                                                        "queryType": "table",
-                                                        "table": ""
-                                                    }
-                                                },
-                                                "pluginVersion": "4.18.0",
-                                                "queryType": "table",
-                                                "rawSql": "SELECT round(sum(bot_edit_count) / sum(edit_count) * 100, 1)\r\nFROM agg_edits\r\nWHERE tick_start = (SELECT max(tick_start) FROM agg_edits)"
-                                            },
-                                            "version": "v0"
-                                        },
-                                        "refId": "A"
-                                    }
-                                }
-                            ],
-                            "queryOptions": {},
-                            "transformations": []
-                        }
-                    },
-                    "description": "",
-                    "id": 4,
-                    "links": [],
-                    "title": "Bot share %",
-                    "vizConfig": {
-                        "group": "gauge",
-                        "kind": "VizConfig",
-                        "spec": {
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "thresholds"
-                                    },
-                                    "thresholds": {
-                                        "mode": "absolute",
-                                        "steps": [
-                                            {
-                                                "color": "green",
-                                                "value": 0
-                                            },
-                                            {
-                                                "color": "red",
-                                                "value": 80
-                                            }
-                                        ]
-                                    }
-                                },
-                                "overrides": []
-                            },
-                            "options": {
-                                "barShape": "flat",
-                                "barWidthFactor": 0.5,
-                                "effects": {
-                                    "barGlow": false,
-                                    "centerGlow": false,
-                                    "gradient": true
-                                },
-                                "endpointMarker": "point",
-                                "minVizHeight": 75,
-                                "minVizWidth": 75,
-                                "orientation": "auto",
-                                "reduceOptions": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ],
-                                    "fields": "",
-                                    "values": false
-                                },
-                                "segmentCount": 1,
-                                "segmentSpacing": 0.3,
-                                "shape": "gauge",
-                                "showThresholdLabels": false,
-                                "showThresholdMarkers": true,
-                                "sizing": "auto",
-                                "sparkline": true,
-                                "textMode": "auto"
-                            }
-                        },
-                        "version": "13.1.0"
-                    }
-                }
-            }
-        },
-        "layout": {
-            "kind": "GridLayout",
-            "spec": {
-                "items": [
-                    {
-                        "kind": "GridLayoutItem",
-                        "spec": {
-                            "element": {
-                                "kind": "ElementReference",
-                                "name": "panel-1"
-                            },
-                            "height": 7,
-                            "width": 12,
-                            "x": 0,
-                            "y": 0
-                        }
-                    },
-                    {
-                        "kind": "GridLayoutItem",
-                        "spec": {
-                            "element": {
-                                "kind": "ElementReference",
-                                "name": "panel-2"
-                            },
-                            "height": 7,
-                            "width": 12,
-                            "x": 12,
-                            "y": 0
-                        }
-                    },
-                    {
-                        "kind": "GridLayoutItem",
-                        "spec": {
-                            "element": {
-                                "kind": "ElementReference",
-                                "name": "panel-3"
-                            },
-                            "height": 8,
-                            "width": 12,
-                            "x": 0,
-                            "y": 7
-                        }
-                    },
-                    {
-                        "kind": "GridLayoutItem",
-                        "spec": {
-                            "element": {
-                                "kind": "ElementReference",
-                                "name": "panel-4"
-                            },
-                            "height": 8,
-                            "width": 12,
-                            "x": 12,
-                            "y": 7
-                        }
-                    }
-                ]
-            }
-        },
-        "links": [],
-        "liveNow": false,
-        "preferences": {
-            "layout": {
-                "kind": "GridLayout",
-                "spec": {
-                    "items": []
-                }
-            }
-        },
-        "preload": false,
-        "tags": [],
-        "timeSettings": {
-            "autoRefresh": "",
-            "autoRefreshIntervals": [
-                "5s",
-                "10s",
-                "30s",
-                "1m",
-                "5m",
-                "15m",
-                "30m",
-                "1h",
-                "2h",
-                "1d"
-            ],
-            "fiscalYearStartMonth": 0,
-            "from": "2026-07-02T05:37:45.762Z",
-            "hideTimepicker": false,
-            "timezone": "browser",
-            "to": "2026-07-02T07:42:14.237Z"
-        },
-        "title": "Wiki Edit Monitor",
-        "variables": [
-            {
-                "kind": "QueryVariable",
-                "spec": {
-                    "allowCustomValue": true,
-                    "current": {
-                        "text": "tawiki",
-                        "value": "tawiki"
-                    },
-                    "definition": "",
-                    "hide": "hideVariable",
-                    "includeAll": false,
-                    "multi": false,
-                    "name": "wiki",
-                    "options": [],
-                    "query": {
-                        "datasource": {
-                            "name": "clickhouse"
-                        },
-                        "group": "grafana-clickhouse-datasource",
-                        "kind": "DataQuery",
-                        "spec": {},
-                        "version": "v0"
-                    },
-                    "refresh": "onDashboardLoad",
-                    "regex": "",
-                    "regexApplyTo": "value",
-                    "skipUrlSync": false,
-                    "sort": "disabled"
-                }
-            },
-            {
-                "kind": "QueryVariable",
-                "spec": {
-                    "allowCustomValue": true,
-                    "current": {
-                        "text": "பயனர்:Ksmuthukrishnan/மணல்தொட்டி",
-                        "value": "பயனர்:Ksmuthukrishnan/மணல்தொட்டி"
-                    },
-                    "definition": "",
-                    "hide": "hideVariable",
-                    "includeAll": false,
-                    "multi": false,
-                    "name": "title",
-                    "options": [],
-                    "query": {
-                        "datasource": {
-                            "name": "clickhouse"
-                        },
-                        "group": "grafana-clickhouse-datasource",
-                        "kind": "DataQuery",
-                        "spec": {},
-                        "version": "v0"
-                    },
-                    "refresh": "onDashboardLoad",
-                    "regex": "",
-                    "regexApplyTo": "value",
-                    "skipUrlSync": false,
-                    "sort": "disabled"
-                }
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
             }
         ]
-    }
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "grafana-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "title",
+                            "scope": "series"
+                        },
+                        "properties": [
+                            {
+                                "id": "links",
+                                "value": [
+                                    {
+                                        "targetBlank": false,
+                                        "title": "Link",
+                                        "url": "https://${__data.fields.server_name}/wiki/${__data.fields.title}"
+                                    },
+                                    {
+                                        "title": "Show history",
+                                        "url": "/d/advdd4s?var-title=${__data.fields.title}&var-wiki=${__data.fields.wiki}"
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "custom.hidden",
+                                "value": false
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "hour",
+                            "scope": "series"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hidden",
+                                "value": true
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "namespace",
+                            "scope": "series"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hidden",
+                                "value": true
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "server_name",
+                            "scope": "series"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hidden",
+                                "value": true
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "baseline",
+                            "scope": "series"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hidden",
+                                "value": true
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "stddev",
+                            "scope": "series"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hidden",
+                                "value": true
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "edit_count"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 117
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true,
+                "sortBy": [
+                    {
+                        "desc": true,
+                        "displayName": "z_score"
+                    }
+                ]
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "grafana-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "editorType": "sql",
+                    "format": 1,
+                    "meta": {
+                        "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                        }
+                    },
+                    "pluginVersion": "4.18.0",
+                    "queryType": "table",
+                    "rawSql": "WITH hourly AS (\r\n    SELECT\r\n        toStartOfHour(tick_start) AS hour,\r\n        wiki,\r\n        server_name,\r\n        namespace,\r\n        title,\r\n        sum(edit_count) AS edit_count\r\n    FROM agg_edits\r\n    GROUP BY hour, wiki, server_name, namespace, title\r\n),\r\nscored AS (\r\n    SELECT\r\n        hour,\r\n        wiki,\r\n        server_name,\r\n        namespace,\r\n        title,\r\n        edit_count,\r\n        avgIf(edit_count, hour < (SELECT max(hour) FROM hourly))\r\n            OVER (PARTITION BY wiki, title) AS baseline,\r\n        stddevPopIf(edit_count, hour < (SELECT max(hour) FROM hourly))\r\n            OVER (PARTITION BY wiki, title) AS stddev,\r\n        count() OVER (PARTITION BY wiki, title) AS observation_count\r\n    FROM hourly\r\n)\r\nSELECT\r\n    hour,\r\n    wiki,\r\n    server_name,\r\n    namespace,\r\n    title,\r\n    edit_count,\r\n    round(baseline, 2) AS baseline,\r\n    round(stddev, 2)   AS stddev,\r\n    round((edit_count - baseline) / stddev, 2) AS z_score\r\nFROM scored\r\nWHERE hour = (SELECT max(hour) FROM hourly)\r\n  AND observation_count >= 10\r\n  AND stddev > 0\r\n  AND z_score > 0\r\nORDER BY z_score DESC\r\nLIMIT 50",
+                    "refId": "A"
+                }
+            ],
+            "title": "Top anomalies",
+            "type": "table"
+        },
+        {
+            "datasource": {
+                "type": "grafana-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 2,
+            "options": {
+                "annotations": {
+                    "clustering": -1,
+                    "multiLane": false
+                },
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "enableFacetedFilter": false,
+                    "overflow": "ellipsis",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "grafana-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "editorType": "sql",
+                    "format": 1,
+                    "meta": {
+                        "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                        }
+                    },
+                    "pluginVersion": "4.18.0",
+                    "queryType": "table",
+                    "rawSql": "SELECT\r\n    tick_start,\r\n    sum(edit_count) AS edit_count\r\nFROM agg_edits\r\nWHERE title = '$title'\r\n  AND wiki = '$wiki'\r\nGROUP BY tick_start\r\nORDER BY tick_start WITH FILL STEP toIntervalMinute(2)",
+                    "refId": "A"
+                }
+            ],
+            "title": "Edit history",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "grafana-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 7
+            },
+            "id": 3,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "grafana-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "editorType": "sql",
+                    "format": 1,
+                    "meta": {
+                        "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                        }
+                    },
+                    "pluginVersion": "4.18.0",
+                    "queryType": "table",
+                    "rawSql": "SELECT sum(edit_count)\r\nFROM agg_edits\r\nWHERE tick_start = (SELECT max(tick_start) FROM agg_edits)",
+                    "refId": "A"
+                }
+            ],
+            "title": "Edits / tick",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "grafana-clickhouse-datasource",
+                "uid": "clickhouse"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 7
+            },
+            "id": 4,
+            "options": {
+                "barShape": "flat",
+                "barWidthFactor": 0.5,
+                "effects": {
+                    "barGlow": false,
+                    "centerGlow": false,
+                    "gradient": true
+                },
+                "endpointMarker": "point",
+                "minVizHeight": 75,
+                "minVizWidth": 75,
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "segmentCount": 1,
+                "segmentSpacing": 0.3,
+                "shape": "gauge",
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true,
+                "sizing": "auto",
+                "sparkline": true,
+                "textMode": "auto"
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "grafana-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "editorType": "sql",
+                    "format": 1,
+                    "meta": {
+                        "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                        }
+                    },
+                    "pluginVersion": "4.18.0",
+                    "queryType": "table",
+                    "rawSql": "SELECT round(sum(bot_edit_count) / sum(edit_count) * 100, 1)\r\nFROM agg_edits\r\nWHERE tick_start = (SELECT max(tick_start) FROM agg_edits)",
+                    "refId": "A"
+                }
+            ],
+            "title": "Bot share %",
+            "type": "gauge"
+        }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "allowCustomValue": true,
+                "current": {
+                    "text": "tawiki",
+                    "value": "tawiki"
+                },
+                "datasource": {
+                    "type": "grafana-clickhouse-datasource",
+                    "uid": "clickhouse"
+                },
+                "definition": "",
+                "hide": 2,
+                "includeAll": false,
+                "name": "wiki",
+                "options": [],
+                "query": {},
+                "refresh": 1,
+                "regex": "",
+                "type": "query"
+            },
+            {
+                "allowCustomValue": true,
+                "current": {
+                    "text": "பயனர்:Ksmuthukrishnan/மணல்தொட்டி",
+                    "value": "பயனர்:Ksmuthukrishnan/மணல்தொட்டி"
+                },
+                "datasource": {
+                    "type": "grafana-clickhouse-datasource",
+                    "uid": "clickhouse"
+                },
+                "definition": "",
+                "hide": 2,
+                "includeAll": false,
+                "name": "title",
+                "options": [],
+                "query": {},
+                "refresh": 1,
+                "regex": "",
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "2026-07-02T05:37:45.762Z",
+        "to": "2026-07-02T07:42:14.237Z"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Wiki Edit Monitor",
+    "uid": "advdd4s",
+    "version": 1
 }

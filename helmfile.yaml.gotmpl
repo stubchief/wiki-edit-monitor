@@ -1,0 +1,41 @@
+repositories:
+  - name: altinity
+    url: https://helm.altinity.com
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
+
+releases:
+  - name: clickhouse
+    chart: altinity/clickhouse
+    namespace: clickhouse
+    createNamespace: true
+    values:
+      - deploy/helm/clickhouse-values.yaml
+    set:
+      - name: clickhouse.defaultUser.password
+        value: {{ env "CLICKHOUSE_PASSWORD" }}
+
+  - name: grafana-dashboards
+    chart: deploy/helm/grafana-dashboards
+    needs:
+      - clickhouse/clickhouse
+
+  - name: grafana
+    chart: grafana/grafana
+    version: "8.12.1"
+    needs:
+      - clickhouse/clickhouse
+      - grafana-dashboards
+    values:
+      - deploy/helm/grafana-values.yaml
+    set:
+      - name: adminPassword
+        value: {{ env "GRAFANA_PASSWORD" }}
+
+  - name: consumer
+    chart: deploy/helm/consumer
+    needs:
+      - clickhouse/clickhouse
+    set:
+      - name: clickhouse.password
+        value: {{ env "CLICKHOUSE_PASSWORD" }}

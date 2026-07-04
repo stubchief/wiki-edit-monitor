@@ -23,6 +23,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+    ports:
+    - "8080:8080"
 
   grafana:
     image: grafana/grafana:latest

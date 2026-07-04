@@ -1,0 +1,9 @@
+# k3d-config.yaml
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: wiki-edit-monitor
+ports:
+  - port: 3000:30300
+    nodeFilters:
+      - loadbalancer

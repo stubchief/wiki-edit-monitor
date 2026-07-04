@@ -1,0 +1,40 @@
+adminPassword: secret
+
+plugins:
+  - grafana-clickhouse-datasource
+
+grafana.ini:
+  server:
+    root_url: "%(protocol)s://%(domain)s:%(http_port)s/"
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: ClickHouse
+        type: grafana-clickhouse-datasource
+        uid: clickhouse
+        jsonData:
+          host: clickhouse-clickhouse.clickhouse.svc.cluster.local
+          port: 8123
+          username: default
+          defaultDatabase: default
+          protocol: http
+        secureJsonData:
+          password: secret
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: default
+        type: file
+        options:
+          path: /var/lib/grafana/dashboards
+
+dashboardsConfigMaps:
+  default: grafana-dashboards
+
+service:
+  type: NodePort
+  nodePort: 30300

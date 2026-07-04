@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-schema-init
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: schema-init
+          image: clickhouse/clickhouse-client:latest
+          command:
+            - clickhouse-client
+            - --host={{ .Values.clickhouse.host }}
+            - --port=9000
+            - --user={{ .Values.clickhouse.user }}
+            - --password=$(CLICKHOUSE_PASSWORD)
+            - --query
+            - |
+              CREATE TABLE IF NOT EXISTS agg_edits
+              (
+                  tick_start        DateTime,
+                  wiki               LowCardinality(String),
+                  server_name        LowCardinality(String),
+                  namespace          Int32,
+                  title              String,
+                  edit_count         UInt32,
+                  distinct_users     UInt32,
+                  new_user_count     UInt32,
+                  bot_edit_count     UInt32,
+                  byte_diff_abs_sum  Int64
+              )
+              ENGINE = MergeTree
+              PARTITION BY toYYYYMMDD(tick_start)
+              ORDER BY (wiki, namespace, title, tick_start)
+              TTL tick_start + INTERVAL 30 DAY
+          env:
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-consumer-secret
+                  key: clickhouse-password
