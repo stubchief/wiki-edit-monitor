@@ -1,0 +1,4 @@
+# k3s uses containerd, not docker
+chaosDaemon:
+  runtime: containerd
+  socketPath: /run/k3s/containerd/containerd.sock

@@ -1,0 +1,20 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: consumer-network-partition
+  namespace: default
+spec:
+  action: partition
+  mode: one
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: consumer-consumer
+  direction: both
+  target:
+    mode: all
+    selector:
+      namespaces:
+        - clickhouse
+  duration: 3m

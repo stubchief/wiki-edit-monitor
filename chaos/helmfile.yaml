@@ -1,0 +1,11 @@
+repositories:
+  - name: chaos-mesh
+    url: https://charts.chaos-mesh.org
+
+releases:
+  - name: chaos-mesh
+    chart: chaos-mesh/chaos-mesh
+    namespace: chaos-mesh
+    createNamespace: true
+    values:
+      - ../deploy/helm/chaos-mesh-values.yaml
