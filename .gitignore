@@ -1,3 +1,6 @@
 .env
 *.pyc
 __pycache__/
+deploy/terraform/key.json
+deploy/terraform/.terraform/
+deploy/terraform/terraform.tfstate*

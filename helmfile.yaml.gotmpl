@@ -5,6 +5,15 @@ repositories:
     url: https://grafana.github.io/helm-charts
 
 releases:
+
+  - name: clickhouse-secret
+    chart: deploy/helm/clickhouse-secret
+    namespace: clickhouse
+    createNamespace: true
+    set:
+      - name: password
+        value: {{ env "TF_VAR_clickhouse_password" }}
+
   - name: clickhouse
     chart: altinity/clickhouse
     namespace: clickhouse
@@ -13,7 +22,7 @@ releases:
       - deploy/helm/clickhouse-values.yaml
     set:
       - name: clickhouse.defaultUser.password
-        value: {{ env "CLICKHOUSE_PASSWORD" }}
+        value: {{ env "TF_VAR_clickhouse_password" }}
 
   - name: grafana-dashboards
     chart: deploy/helm/grafana-dashboards
@@ -30,7 +39,7 @@ releases:
       - deploy/helm/grafana-values.yaml
     set:
       - name: adminPassword
-        value: {{ env "GRAFANA_PASSWORD" }}
+        value: {{ env "TF_VAR_grafana_password" }}
 
   - name: consumer
     chart: deploy/helm/consumer
@@ -38,4 +47,4 @@ releases:
       - clickhouse/clickhouse
     set:
       - name: clickhouse.password
-        value: {{ env "CLICKHOUSE_PASSWORD" }}
+        value: {{ env "TF_VAR_clickhouse_password" }}

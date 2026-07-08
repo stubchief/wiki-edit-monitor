@@ -8,23 +8,4 @@ clickhouse:
   replicas: 1
   defaultUser:
     allowExternalAccess: true
-  initSQLs:
-    statements:
-      - |
-        CREATE TABLE IF NOT EXISTS agg_edits
-        (
-            tick_start        DateTime,
-            wiki               LowCardinality(String),
-            server_name        LowCardinality(String),
-            namespace          Int32,
-            title              String,
-            edit_count         UInt32,
-            distinct_users     UInt32,
-            new_user_count     UInt32,
-            bot_edit_count     UInt32,
-            byte_diff_abs_sum  Int64
-        )
-        ENGINE = MergeTree
-        PARTITION BY toYYYYMMDD(tick_start)
-        ORDER BY (wiki, namespace, title, tick_start)
-        TTL tick_start + INTERVAL 30 DAY;
+    password_secret_name: clickhouse-user-password

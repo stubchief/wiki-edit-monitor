@@ -1,0 +1,24 @@
+#cloud-config
+
+package_update: true
+
+packages:
+  - curl
+  - git
+
+runcmd:
+  # --- k3s ---
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.32.0+k3s1 sh -
+  - until [ -f /etc/rancher/k3s/k3s.yaml ]; do sleep 2; done
+  - mkdir -p /home/ubuntu/.kube
+  - cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/.kube/config
+  - chown -R ubuntu:ubuntu /home/ubuntu/.kube
+  - chmod 600 /home/ubuntu/.kube/config
+
+  # --- helm ---
+  - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get-helm.sh
+  - bash /tmp/get-helm.sh
+
+  # --- helmfile ---
+  - curl -fsSL https://github.com/helmfile/helmfile/releases/download/v1.6.0/helmfile_1.6.0_linux_amd64.tar.gz -o /tmp/helmfile.tar.gz
+  - tar -xz -C /usr/local/bin helmfile < /tmp/helmfile.tar.gz

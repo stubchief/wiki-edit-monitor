@@ -36,5 +36,10 @@ dashboardsConfigMaps:
   default: grafana-dashboards
 
 service:
-  type: NodePort
-  nodePort: 30300
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  hosts:
+    - ""
