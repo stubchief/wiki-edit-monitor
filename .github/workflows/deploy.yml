@@ -11,6 +11,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Run tests
+        run: |
+          pip install -q pytest pytest-asyncio aiohttp clickhouse-connect
+          cd consumer && python -m pytest tests/ -v
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -38,6 +43,19 @@ jobs:
           TF_VAR_ssh_public_key_path: ~/.ssh/id_rsa.pub
         run: terraform init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
 
+      - name: Terraform validate
+        working-directory: deploy/terraform
+        run: terraform validate
+
+      - name: Helm lint
+        run: helm lint deploy/helm/consumer
+
+      - name: Build and push consumer image
+        run: |
+          echo '${{ secrets.GHCR_TOKEN }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker build -t ghcr.io/${{ github.repository_owner }}/wiki-edit-monitor-consumer:latest consumer/
+          docker push ghcr.io/${{ github.repository_owner }}/wiki-edit-monitor-consumer:latest
+
       - name: Terraform apply
         working-directory: deploy/terraform
         env:
@@ -61,4 +79,8 @@ jobs:
           CLICKHOUSE_PASSWORD: ${{ secrets.TF_VAR_clickhouse_password }}
           GRAFANA_PASSWORD: ${{ secrets.TF_VAR_grafana_password }}
         run: |
-          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=20 ubuntu@$VM_IP             "sudo git clone https://github.com/stubchief/wiki-edit-monitor.git /opt/wiki-edit-monitor || (sudo git -C /opt/wiki-edit-monitor fetch origin && sudo git -C /opt/wiki-edit-monitor reset --hard origin/main) && sudo chown -R ubuntu:ubuntu /opt/wiki-edit-monitor &&             TF_VAR_clickhouse_password=$CLICKHOUSE_PASSWORD TF_VAR_grafana_password=$GRAFANA_PASSWORD             KUBECONFIG=/home/ubuntu/.kube/config             helmfile --file /opt/wiki-edit-monitor/helmfile.yaml.gotmpl sync"
+          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=20 ubuntu@$VM_IP \
+            "sudo git clone https://github.com/stubchief/wiki-edit-monitor.git /opt/wiki-edit-monitor || (sudo git -C /opt/wiki-edit-monitor fetch origin && sudo git -C /opt/wiki-edit-monitor reset --hard origin/main) && sudo chown -R ubuntu:ubuntu /opt/wiki-edit-monitor && \
+            TF_VAR_clickhouse_password=$CLICKHOUSE_PASSWORD TF_VAR_grafana_password=$GRAFANA_PASSWORD \
+            KUBECONFIG=/home/ubuntu/.kube/config \
+            helmfile --file /opt/wiki-edit-monitor/helmfile.yaml.gotmpl sync"

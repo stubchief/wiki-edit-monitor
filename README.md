@@ -28,6 +28,8 @@ The anomaly score is a z-score relative to each page's own edit history: `(edit_
 
 **Chaos Mesh** — pod-kill and network-partition resilience scenarios
 
+**pytest** — unit tests for bucketing logic; run automatically in CI before deploy
+
 **Docker Compose** — local development only, not used in production
 
 ## Local development
@@ -49,9 +51,9 @@ On first run the consumer backfills 1 day of history (`BACKFILL_DAYS=1` in `dock
 1. Create a Yandex Object Storage bucket named `wiki-edit-monitor-tfstate` (private, versioning enabled).
 
 2. Run bootstrap to create a Terraform service account:
-```bash
+   ```bash
    bash deploy/bootstrap.sh
-```
+   ```
 
 3. Create a static access key for the service account in the Yandex Cloud console (IAM → Service accounts → terraform-sa → Static access keys).
 
