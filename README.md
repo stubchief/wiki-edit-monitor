@@ -6,9 +6,9 @@ A streaming anomaly detection pipeline for Wikimedia edits. Consumes the public 
 
 ## Architecture
 
-Wikimedia publishes a continuous SSE stream of all edits across its projects. A Python consumer reads this stream, groups events into 2-minute buckets by event time, and flushes aggregated counters to ClickHouse. A Grafana dashboard runs z-score queries directly against ClickHouse to surface pages whose edit rate is anomalously high relative to their own history.
+Wikimedia publishes a continuous SSE stream of all edits across its projects. A Python consumer reads this stream, groups events into 2-minute buckets by event time, and flushes aggregated counters to ClickHouse.
 
-The anomaly score is a z-score relative to each page's own edit history: `(edit_count - mean) / stddev` over past hourly windows. Pages with fewer than 10 historical observations are excluded to avoid false positives on rarely-edited articles.
+The Grafana dashboard is structured into collapsible rows to separate infrastructure monitoring from data analysis. The Consumer Health row tracks system viability using container readiness metrics from Prometheus and consumer processing lag from ClickHouse. The Anomalies Analytics row runs z-score queries directly against ClickHouse to surface pages whose edit rate is anomalously high relative to their own history. The anomaly score is computed as `(edit_count - mean) / stddev` over past hourly windows. Pages with fewer than 10 historical observations are excluded to avoid false positives on rarely-edited articles.
 
 ## Stack
 

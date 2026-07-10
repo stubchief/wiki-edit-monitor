@@ -22,6 +22,198 @@
     "links": [],
     "panels": [
         {
+            "collapsed": true,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 6,
+            "panels": [
+                {
+                    "datasource": {
+                        "type": "grafana-clickhouse-datasource",
+                        "uid": "clickhouse"
+                    },
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "thresholds"
+                            },
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    },
+                                    {
+                                        "color": "red",
+                                        "value": 240
+                                    }
+                                ]
+                            },
+                            "unit": "s"
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 31
+                    },
+                    "id": 7,
+                    "options": {
+                        "colorMode": "value",
+                        "graphMode": "area",
+                        "justifyMode": "auto",
+                        "orientation": "auto",
+                        "percentChangeColorMode": "standard",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "",
+                            "values": false
+                        },
+                        "showPercentChange": false,
+                        "textMode": "auto",
+                        "wideLayout": true
+                    },
+                    "pluginVersion": "11.6.0",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "grafana-clickhouse-datasource",
+                                "uid": "clickhouse"
+                            },
+                            "editorType": "sql",
+                            "format": 1,
+                            "hide": false,
+                            "meta": {
+                                "builderOptions": {
+                                    "columns": [],
+                                    "database": "",
+                                    "limit": 1000,
+                                    "mode": "list",
+                                    "queryType": "table",
+                                    "table": ""
+                                }
+                            },
+                            "pluginVersion": "4.19.0",
+                            "queryType": "table",
+                            "rawSql": "SELECT (now() - max(tick_start)) AS lag_seconds FROM agg_edits",
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "Consumer Lag",
+                    "type": "stat"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "thresholds"
+                            },
+                            "mappings": [
+                                {
+                                    "options": {
+                                        "0": {
+                                            "color": "red",
+                                            "index": 1,
+                                            "text": "Dead"
+                                        },
+                                        "1": {
+                                            "color": "green",
+                                            "index": 0,
+                                            "text": "Healthy"
+                                        }
+                                    },
+                                    "type": "value"
+                                }
+                            ],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    },
+                                    {
+                                        "color": "red",
+                                        "value": 80
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 31
+                    },
+                    "id": 8,
+                    "options": {
+                        "colorMode": "value",
+                        "graphMode": "none",
+                        "justifyMode": "auto",
+                        "orientation": "auto",
+                        "percentChangeColorMode": "standard",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "",
+                            "values": false
+                        },
+                        "showPercentChange": false,
+                        "textMode": "auto",
+                        "wideLayout": true
+                    },
+                    "pluginVersion": "11.6.0",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "prometheus",
+                                "uid": "prometheus"
+                            },
+                            "editorMode": "code",
+                            "expr": "kube_pod_container_status_ready{container=\"consumer\"}",
+                            "hide": false,
+                            "instant": false,
+                            "legendFormat": "__auto",
+                            "range": true,
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "Consumer Status (Livez)",
+                    "type": "stat"
+                }
+            ],
+            "title": "Consumer Health",
+            "type": "row"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 1
+            },
+            "id": 9,
+            "panels": [],
+            "title": "Anomalies Analytics",
+            "type": "row"
+        },
+        {
             "datasource": {
                 "type": "grafana-clickhouse-datasource",
                 "uid": "clickhouse"
@@ -163,7 +355,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 0
+                "y": 2
             },
             "id": 1,
             "options": {
@@ -275,7 +467,7 @@
                 "h": 7,
                 "w": 12,
                 "x": 12,
-                "y": 0
+                "y": 2
             },
             "id": 2,
             "options": {
@@ -355,7 +547,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 7
+                "y": 9
             },
             "id": 3,
             "options": {
@@ -411,7 +603,7 @@
             "fieldConfig": {
                 "defaults": {
                     "color": {
-                        "mode": "thresholds"
+                        "mode": "fixed"
                     },
                     "mappings": [],
                     "thresholds": {
@@ -425,7 +617,8 @@
                                 "value": 80
                             }
                         ]
-                    }
+                    },
+                    "unit": "percent"
                 },
                 "overrides": []
             },
@@ -433,7 +626,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 12,
-                "y": 7
+                "y": 9
             },
             "id": 4,
             "options": {
@@ -459,7 +652,7 @@
                 "segmentSpacing": 0.3,
                 "shape": "gauge",
                 "showThresholdLabels": false,
-                "showThresholdMarkers": true,
+                "showThresholdMarkers": false,
                 "sizing": "auto",
                 "sparkline": true,
                 "textMode": "auto"
@@ -549,5 +742,5 @@
     "timezone": "browser",
     "title": "Wiki Edit Monitor",
     "uid": "advdd4s",
-    "version": 1
+    "version": 2
 }
