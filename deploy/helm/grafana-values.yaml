@@ -11,6 +11,12 @@ datasources:
   datasources.yaml:
     apiVersion: 1
     datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        isDefault: false
+
       - name: ClickHouse
         type: grafana-clickhouse-datasource
         uid: clickhouse
@@ -20,8 +26,7 @@ datasources:
           username: default
           defaultDatabase: default
           protocol: http
-        secureJsonData:
-          password: secret
+
 
 dashboardProviders:
   dashboardproviders.yaml:

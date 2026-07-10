@@ -3,9 +3,10 @@ repositories:
     url: https://helm.altinity.com
   - name: grafana
     url: https://grafana.github.io/helm-charts
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
 
 releases:
-
   - name: clickhouse-secret
     chart: deploy/helm/clickhouse-secret
     namespace: clickhouse
@@ -18,11 +19,17 @@ releases:
     chart: altinity/clickhouse
     namespace: clickhouse
     createNamespace: true
+    needs:
+      - clickhouse/clickhouse-secret
     values:
       - deploy/helm/clickhouse-values.yaml
-    set:
-      - name: clickhouse.defaultUser.password
-        value: {{ env "TF_VAR_clickhouse_password" }}
+
+  - name: prometheus
+    chart: prometheus-community/kube-prometheus-stack
+    namespace: monitoring
+    createNamespace: true
+    values:
+      - deploy/helm/prometheus-values.yaml
 
   - name: grafana-dashboards
     chart: deploy/helm/grafana-dashboards
@@ -35,11 +42,14 @@ releases:
     needs:
       - clickhouse/clickhouse
       - grafana-dashboards
+      - monitoring/prometheus
     values:
       - deploy/helm/grafana-values.yaml
     set:
       - name: adminPassword
         value: {{ env "TF_VAR_grafana_password" }}
+      - name: datasources.datasources\.yaml.datasources[1].secureJsonData.password
+        value: {{ env "TF_VAR_clickhouse_password" }}
 
   - name: consumer
     chart: deploy/helm/consumer

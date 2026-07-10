@@ -1,0 +1,16 @@
+# We already have Grafana deployed separately — disable the bundled one.
+grafana:
+  enabled: false
+
+# Disable Alertmanager — we use Grafana alerting instead.
+alertmanager:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests:
+        memory: 256Mi
+      limits:
+        memory: 512Mi
